@@ -136,14 +136,21 @@ public class AnalyzerController {
         }
 
         try {
-            File latestFile = fileService.findLatestFile(new File(inputPath));
+            File inputDir = new File(inputPath);
+            File latestFile = fileService.findLatestFile(inputDir);
             if (latestFile == null) {
                 showError("No files found in input directory.");
                 return;
             }
 
-            statusLabel.setText("Loaded: " + latestFile.getName());
-            List<MarketSignal> signals = fileService.readSignals(latestFile);
+            // Find the previous file to get historical signals
+            File previousFile = fileService.findPreviousFile(inputDir);
+
+            statusLabel.setText("Loaded: " + latestFile.getName() +
+                    (previousFile != null ? " (Previous: " + previousFile.getName() + ")" : " (No previous file)"));
+
+            // Read signals with history lookup
+            List<MarketSignal> signals = fileService.readSignalsWithHistory(latestFile, previousFile);
             signalTable.setItems(FXCollections.observableArrayList(signals));
 
         } catch (IOException e) {

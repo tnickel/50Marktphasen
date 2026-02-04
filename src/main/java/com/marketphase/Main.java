@@ -17,7 +17,7 @@ public class Main extends Application {
         scene = new Scene(loadFXML("ui"), 900, 600);
         scene.getStylesheets().add(Main.class.getResource("styles.css").toExternalForm());
         stage.setScene(scene);
-        stage.setTitle("50Marktphasen Analysator");
+        stage.setTitle("50Marktphasen Analysator v1.2.0");
         stage.show();
     }
 
