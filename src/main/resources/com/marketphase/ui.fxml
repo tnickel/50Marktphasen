@@ -31,7 +31,12 @@
                   <Button mnemonicParsing="false" onAction="#onBrowseOutput" text="..." />
                </children>
             </HBox>
-            <Button maxWidth="Infinity" mnemonicParsing="false" onAction="#onLoadData" text="Load Latest Data" />
+            <HBox spacing="10.0">
+               <children>
+                  <Button maxWidth="Infinity" mnemonicParsing="false" onAction="#onLoadData" text="Load Latest Data" HBox.hgrow="ALWAYS" />
+                  <Button mnemonicParsing="false" onAction="#onShowInfo" text="Info" />
+               </children>
+            </HBox>
          </children>
       </VBox>
    </top>

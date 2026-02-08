@@ -163,6 +163,17 @@ public class AnalyzerController {
     }
 
     @FXML
+    private void onShowInfo() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Information");
+        alert.setHeaderText("Über 50Marktphasen Analysator");
+        alert.setContentText(
+                "Der 50Marktphasen Analysator wertet ein input file aus was mit Grok erstellt wurde um daraus die Marktphasen zu generieren. Es wird ein last_known_signals.csv generiert und in einem bestimmten Verzeichnis abgelegt.");
+        alert.getDialogPane().setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
+        alert.showAndWait();
+    }
+
+    @FXML
     private void onExport() {
         String outputPath = outputDirField.getText();
         if (outputPath.isEmpty()) {

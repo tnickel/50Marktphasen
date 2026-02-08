@@ -1,7 +1,7 @@
 package com.marketphase.service;
 
 import com.marketphase.model.MarketSignal;
-import com.opencsv.bean.CsvToBeanBuilder;
+// import com.opencsv.bean.CsvToBeanBuilder; // Removed as we use custom parser now
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -102,6 +102,19 @@ public class FileService {
     }
 
     /**
+     * Remove leading/trailing quotes from a CSV field
+     */
+    private String stripQuotes(String value) {
+        if (value == null)
+            return "";
+        String trimmed = value.trim();
+        if (trimmed.length() >= 2 && trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
+            return trimmed.substring(1, trimmed.length() - 1);
+        }
+        return trimmed;
+    }
+
+    /**
      * Get the signal string (Buy Signal / Sell Signal / Neutral Signal) from a
      * MarketSignal
      */
@@ -131,11 +144,9 @@ public class FileService {
                 String lower = firstLine.toLowerCase();
                 // Check for standard headers
                 if (lower.contains("pair") && lower.contains("market_phase")) {
-                    // Use OpenCSV for standard format
-                    return new CsvToBeanBuilder<MarketSignal>(new FileReader(file))
-                            .withType(MarketSignal.class)
-                            .build()
-                            .parse();
+                    // Use robust custom parser for Grok output (handles unquoted commas in last
+                    // column)
+                    return readRobustFormat(file);
                 }
             }
         }
@@ -203,6 +214,47 @@ public class FileService {
         signal.setLastSignal("");
 
         return signal;
+    }
+
+    /**
+     * Read robust CSV format where the last column might contain unquoted commas.
+     * Splitting by comma with limit 5 ensures the description captures everything
+     * after the 4th comma.
+     */
+    private List<MarketSignal> readRobustFormat(File file) throws IOException {
+        List<MarketSignal> signals = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            int lineNum = 0;
+
+            while ((line = br.readLine()) != null) {
+                lineNum++;
+                line = line.trim();
+
+                if (line.isEmpty())
+                    continue;
+                if (lineNum == 1 && line.toLowerCase().contains("pair"))
+                    continue; // Skip header
+
+                // Limit split to 5 to keep the last column intact even if it has commas
+                String[] parts = line.split(",", 5);
+
+                if (parts.length >= 5) {
+                    MarketSignal signal = new MarketSignal();
+                    signal.setPair(stripQuotes(parts[0]));
+                    signal.setMarketPhase(stripQuotes(parts[1]));
+                    signal.setLastSignal(stripQuotes(parts[2]));
+                    signal.setDate(stripQuotes(parts[3]));
+                    signal.setSourceSummary(stripQuotes(parts[4]));
+                    signals.add(signal);
+                } else if (parts.length >= 2) {
+                    // Attempt to salvage partial lines? For now just skip or log
+                    System.err.println("Skipping incomplete line " + lineNum + ": " + line);
+                }
+            }
+        }
+        return signals;
     }
 
     public void writeLastSignals(List<MarketSignal> signals, File outputDir) throws IOException {
